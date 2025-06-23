@@ -1,5 +1,5 @@
 # Exercício – Análise Técnica de Projetos Reais no GitHub
-**Nome:** [Seu Nome]  
+**Nome:** Lucas Daniel Gomes e Gabriel Costa dos Santos
 **Data:** 23/06/2025  
 **Objetivo:** Analisar projetos open-source no GitHub que implementem características técnicas específicas, identificando trechos de código e justificando seu uso.
 
