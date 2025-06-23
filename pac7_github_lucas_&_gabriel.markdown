@@ -24,32 +24,25 @@ O projeto utiliza Kafka para comunicação assíncrona entre microserviços, per
 
 ---
 
-## 2. Projeto Analisado: [Spring Boot Microservices](https://github.com/in28minutes/spring-microservices-v2)
-**Link:** https://github.com/in28minutes/spring-microservices-v2  
-**Característica Identificada:** Uso de cache (Redis)
+## 3. Projeto Analisado: [Spring Boot Resilience4j](https://github.com/resilience4j/resilience4j-spring-boot2-demo)
+**Link:** https://github.com/resilience4j/resilience4j-spring-boot2-demo  
+**Característica Identificada:** Circuit breaker
 
 ### Evidência (Trecho de Código):
 ```java
-// src/main/java/com/in28minutes/microservices/config/RedisConfig.java
-@Configuration
-@EnableCaching
-public class RedisConfig {
-    @Bean
-    public JedisConnectionFactory jedisConnectionFactory() {
-        return new JedisConnectionFactory();
-    }
+// src/main/java/io/github/resilience4j/demo/service/BusinessService.java
+@CircuitBreaker(name = "backendA", fallbackMethod = "fallback")
+public String callBackendA() {
+    return restTemplate.getForObject("http://backend-a/api", String.class);
+}
 
-    @Bean
-    RedisTemplate<String, Object> redisTemplate() {
-        RedisTemplate redis redisTemplate = new RedisTemplate<>();
-        redisTemplate.setConnectionTemplate.setConnectionFactory(jedisConnectionFactory());
-        return redisTemplate;
-    }
+public String fallback(Throwable t) {
+    return "Fallback response due to: " + t.getMessage();
 }
 ```
 
 ### Justificativa:
-O projeto utiliza Redis como cache para armazenar resultados de consultas frequentes, como detalhes de produtos em um serviço de catálogo. Redis foi adotado por sua alta performance em operações de leitura/escrita e baixa latência, reduzindo a carga no banco de dados relacional. Isso melhora o tempo de resposta para endpoints críticos, especialmente em cenários de alta concorrência.
+O projeto implementa o padrão circuit breaker com Resilience4j para proteger chamadas a serviços externos. Essa técnica foi adotada para prevenir falhas em cascata em arquiteturas de microserviços, retornando respostas de fallback quando um serviço está indisponível. Isso garante maior resiliência e estabilidade do sistema.
 
 ---
 
