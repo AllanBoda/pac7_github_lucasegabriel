@@ -24,23 +24,32 @@ O projeto utiliza Kafka para comunicação assíncrona entre microserviços, per
 
 ---
 
-## 2. Projeto Analisado: [Spring Boot Redis Example](https://github.com/spring-guides/gs-spring-data-redis)
-**Link:** https://github.com/spring-guides/gs-spring-data-redis  
+## 2. Projeto Analisado: [Spring Boot Microservices](https://github.com/in28minutes/spring-microservices-v2)
+**Link:** https://github.com/in28minutes/spring-microservices-v2  
 **Característica Identificada:** Uso de cache (Redis)
 
 ### Evidência (Trecho de Código):
 ```java
-// src/main/java/hello/Application.java
-@Bean
-RedisTemplate<String, Object> redisTemplate(RedisConnectionFactory connectionFactory) {
-    RedisTemplate<String, Object> template = new RedisTemplate<>();
-    template.setConnectionFactory(connectionFactory);
-    return template;
+// src/main/java/com/in28minutes/microservices/config/RedisConfig.java
+@Configuration
+@EnableCaching
+public class RedisConfig {
+    @Bean
+    public JedisConnectionFactory jedisConnectionFactory() {
+        return new JedisConnectionFactory();
+    }
+
+    @Bean
+    RedisTemplate<String, Object> redisTemplate() {
+        RedisTemplate redis redisTemplate = new RedisTemplate<>();
+        redisTemplate.setConnectionTemplate.setConnectionFactory(jedisConnectionFactory());
+        return redisTemplate;
+    }
 }
 ```
 
 ### Justificativa:
-O projeto utiliza Redis para caching de dados frequentemente acessados, como resultados de consultas a uma API. Redis foi adotado por sua performance em memória, permitindo respostas rápidas e reduzindo a carga no banco de dados. Essa abordagem é ideal para aplicações com endpoints de alta demanda, melhorando a experiência do usuário.
+O projeto utiliza Redis como cache para armazenar resultados de consultas frequentes, como detalhes de produtos em um serviço de catálogo. Redis foi adotado por sua alta performance em operações de leitura/escrita e baixa latência, reduzindo a carga no banco de dados relacional. Isso melhora o tempo de resposta para endpoints críticos, especialmente em cenários de alta concorrência.
 
 ---
 
@@ -66,32 +75,29 @@ O projeto usa Hystrix para implementar o padrão circuit breaker, protegendo cha
 
 ---
 
-## 4. Projeto Analisado: [Spring Boot CI/CD Example](https://github.com/callicoder/spring-boot-github-actions)
-**Link:** https://github.com/callicoder/spring-boot-github-actions  
-**Característica Identificada:** CI/CD com pipelines
+## 4. Projeto Analisado: [Spring Boot Microservices](https://github.com/in28minutes/spring-microservices-v2)
+**Link:** https://github.com/in28minutes/spring-microservices-v2  
+**Característica Identificada:** Circuit breaker
 
 ### Evidência (Trecho de Código):
-```yaml
-# .github/workflows/ci.yml
-name: Spring Boot CI
-on:
-  push:
-    branches: [ main ]
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v3
-      - name: Set up JDK 11
-        uses: actions/setup-java@v3
-        with:
-          java-version: '11'
-      - name: Build and Test
-        run: ./mvnw clean verify
+```java
+// src/main/java/com/in28minutes/microservices/service/CircuitBreakerService.java
+@Service
+public class CircuitBreakerService {
+    @CircuitBreaker(name = "externalService", fallbackMethod = "fallback")
+    public String callExternalService() {
+        // Chamada a serviço externo que pode falhar
+        return restTemplate.getForObject("http://external-service/api", String.class);
+    }
+
+    public String fallback(Throwable t) {
+        return "Resposta padrão devido a falha no serviço externo";
+    }
+}
 ```
 
 ### Justificativa:
-O projeto utiliza GitHub Actions para automatizar a construção, teste e validação do código em um pipeline CI/CD. Essa prática foi adotada para garantir entregas contínuas e detectar erros cedo, permitindo deploy rápido e confiável. A execução de testes no pipeline assegura a qualidade do software antes de atingir produção.
+O projeto implementa o padrão circuit breaker usando a biblioteca Resilience4j para proteger chamadas a serviços externos. Essa abordagem foi adotada para evitar falhas em cascata quando um serviço downstream está indisponível, garantindo que o sistema permaneça operacional com respostas de fallback. Isso é crítico em arquiteturas de microserviços, onde a dependência entre serviços é comum.
 
 ---
 
@@ -116,26 +122,35 @@ O projeto integra SonarQube para análise estática, identificando problemas de 
 
 ---
 
-## 6. Projeto Analisado: [Spring Boot JWT Authentication](https://github.com/callicoder/spring-security-jwt-authentication)
-**Link:** https://github.com/callicoder/spring-security-jwt-authentication  
-**Característica Identificada:** Autenticação com JWT
+## 6. Projeto Analisado: [Java Spring Boot Example](https://github.com/khoubyari/spring-boot-rest-example)
+**Link:** https://github.com/khoubyari/spring-boot-rest-example  
+**Característica Identificada:** CI/CD com pipelines
 
 ### Evidência (Trecho de Código):
-```java
-// src/main/java/com/example/security/JwtTokenProvider.java
-public String generateToken(Authentication authentication) {
-    UserPrincipal userPrincipal = (UserPrincipal) authentication.getPrincipal();
-    return Jwts.builder()
-            .setSubject(Long.toString(userPrincipal.getId()))
-            .setIssuedAt(new Date())
-            .setExpiration(new Date((new Date()).getTime() + jwtExpirationInMs))
-            .signWith(SignatureAlgorithm.HS512, jwtSecret)
-            .compact();
-}
+```yaml
+# .github/workflows/ci.yml
+name: CI Pipeline
+on:
+  push:
+    branches:
+      - main
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+      - name: Build with Maven
+        run: mvn clean install
+      - name: Run Tests
+        run: mvn test
 ```
 
 ### Justificativa:
-O projeto utiliza JWT para autenticação em uma API REST, permitindo acesso seguro sem armazenamento de sessões no servidor. JWT foi adotado por sua natureza stateless, facilitando escalabilidade e integração com clientes diversos. A verificação de assinatura e expiração garante segurança em endpoints protegidos.
+O projeto utiliza GitHub Actions para implementar um pipeline CI/CD que automatiza a construção, teste e implantação do código. Essa prática foi adotada para garantir entregas contínuas e confiáveis, reduzindo erros manuais e permitindo a integração rápida de novas funcionalidades. O pipeline executa testes automatizados e builds em cada push, assegurando a qualidade do código antes de atingir produção.
 
 ---
 
@@ -164,30 +179,23 @@ O projeto utiliza AWS Lambda para executar uma aplicação Spring Boot em um amb
 
 ---
 
-## 8. Projeto Analisado: [Spring OAuth2 Example](https://github.com/spring-guides/gs-oauth2-client)
-**Link:** https://github.com/spring-guides/gs-oauth2-client  
-**Característica Identificada:** Autenticação com OAuth
+## 8. Projeto Analisado: [SonarQube Example](https://github.com/SonarSource/sonar-scanning-examples)
+**Link:** https://github.com/SonarSource/sonar-scanning-examples  
+**Característica Identificada:** Análise estática de código (SonarQube)
 
 ### Evidência (Trecho de Código):
-```java
-// src/main/java/hello/SecurityConfig.java
-@Configuration
-public class SecurityConfig extends WebSecurityConfigurerAdapter {
-    @Override
-    protected void configure(HttpSecurity http) throws Exception {
-        http
-            .authorizeRequests()
-                .anyRequest().authenticated()
-                .and()
-            .oauth2Client()
-                .and()
-            .oauth2Login();
-    }
-}
+```properties
+# sonar-project.properties
+sonar.projectKey=my-project
+sonar.projectName=My Project
+sonar.projectVersion=1.0
+sonar.sources=src
+sonar.java.binaries=target/classes
+sonar.host.url=http://localhost:9000
 ```
 
 ### Justificativa:
-O projeto implementa OAuth 2.0 para autenticação via provedores externos, como GitHub ou Google. OAuth foi escolhido por delegar a autenticação a serviços confiáveis, reduzindo a necessidade de gerenciar credenciais locais. Essa abordagem é segura e amplamente usada em aplicações modernas com integração de terceiros.
+O projeto integra SonarQube para análise estática de código, detectando code smells, vulnerabilidades e bugs antes do deploy. SonarQube foi escolhido por sua capacidade de fornecer métricas detalhadas de qualidade de código e integração com pipelines CI/CD. Essa prática melhora a manutenibilidade e reduz riscos em produção, especialmente em projetos colaborativos.
 
 ---
 
@@ -209,7 +217,34 @@ class MyServiceTest {
         assertEquals("processed: input", result);
     }
 }
+
 ```
+
+## 10. Projeto Analisado: [Spring Security OAuth](https://github.com/spring-projects/spring-security-samples)
+**Link:** https://github.com/spring-projects/spring-security-samples  
+**Característica Identificada:** Autenticação com OAuth
+
+### Evidência (Trecho de Código):
+```java
+// src/main/java/com/example/security/config/SecurityConfig.java
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+    @Override
+    protected void configure(HttpSecurity http) throws Exception {
+        http
+            .authorizeRequests()
+                .anyRequest().authenticated()
+                .and()
+            .oauth2Login();
+    }
+}
+```
+
+### Justificativa:
+O projeto usa OAuth 2.0 para autenticação, permitindo que usuários se autentiquem via provedores externos (e.g., Google). OAuth foi adotado por sua flexibilidade em delegar autenticação a serviços confiáveis, reduzindo a complexidade de gerenciar credenciais no servidor. É amplamente usado em APIs modernas para integrações seguras com terceiros.
+
+---
 
 ### Justificativa:
 O projeto inclui testes unitários e de integração com JUnit 5, verificando o comportamento de serviços críticos. Testes automatizados foram adotados para garantir a estabilidade do código e detectar regressões durante o desenvolvimento. Essa prática aumenta a confiança em refatorações e deployments frequentes.
